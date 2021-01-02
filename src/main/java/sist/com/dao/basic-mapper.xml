@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sist.com.bean.apple">
+	<!-- 예약 -->
+	<select id="selectRentCar"
+		resultType="sist.com.dto.SelectCarListBean" parameterType="HashMap">
+		select * from(SELECT
+		RENTCAR.RCNO,RENTCAR.RCMODEL,RENTCAR.RCPRICE,RENTCAR.RCIMG,RENTCAR.RCSTATE,OFFICE.OFCNAME,NAVIGATION.NAVINAME,FUEL.FUELNAME,SEGMENT.SGMTNAME,MAKER.MNAME
+		FROM RENTCAR, OFFICE, NAVIGATION, SEGMENT, FUEL, MAKER
+		WHERE
+		RENTCAR.OFCNO = OFFICE.OFCNO AND SEGMENT.SGMTNO = RENTCAR.SGMTNO AND
+		RENTCAR.MAKERNO = MAKER.MAKERNO AND FUEL.FUELNO = RENTCAR.FUELNO AND
+		RENTCAR.NAVINO = NAVIGATION.NAVINO)
+		<trim prefix="WHERE" prefixOverrides="AND " suffixOverrides="AND">
+			<if test="place!='모든지점' and place != null ">
+				OFCNAME=#{place}
+			</if>
+
+			<if test="car!='모든차종' and car !=null">
+				AND SGMTNAME=#{car}
+			</if>
+			AND RCSTATE='예약가능'
+		</trim>
+	</select>
+
+	<update id="updateState" parameterType="java.lang.Integer">
+		UPDATE RENTCAR SET
+		RCSTATE='승인대기'
+		WHERE RCNO=#{VALUE}
+	</update>
+
+	<insert id="insertRentList"
+		parameterType="sist.com.dto.RentListBean">
+		INSERT INTO
+		RENTLIST(rentno,rentdate,returndate,carno,memberno,psgnum,ofcno,rcprice)
+		VALUES(RENTLIST_SEQ_NO.NEXTVAL,#{rentdate},#{returndate},#{carno},#{memberno},#{psgnum},#{ofcno},#{rcprice})
+	</insert>
+	<select id="findOfcno" parameterType="int" resultType="int">
+		SELECT
+		OFCNO FROM RENTCAR
+		WHERE rcno=#{VALUE}
+	</select>
+	<select id="findRcprice" parameterType="int" resultType="int">
+		SELECT
+		rcprice FROM RENTCAR
+		WHERE rcno=#{VALUE}
+	</select>
+
+	<select id="findmemno" parameterType="java.lang.String"
+		resultType="int">
+		SELECT
+		memno FROM MEMBER
+		WHERE memid=#{userid}
+	</select>
+
+	<select id="selectRentList"
+		resultType="sist.com.dto.selectRentListBean">
+		SELECT * FROM(
+		SELECT RENTLIST.RENTNO, RENTLIST.RENTDATE,
+		RENTLIST.RETURNDATE,
+		RENTCAR.RCMODEL, MEMBER.MEMID, RENTLIST.PSGNUM,
+		OFFICE.OFCNAME,
+		RENTLIST.RCPRICE,RENTLIST.CARNO
+		FROM RENTLIST, RENTCAR,
+		MEMBER, OFFICE
+		WHERE RENTLIST.CARNO = RENTCAR.RCNO AND
+		RENTLIST.MEMBERNO = MEMBER.MEMNO
+		AND RENTLIST.OFCNO = OFFICE.OFCNO)
+	</select>
+
+	<delete id="deleteRentList" parameterType="int">
+		DELETE RENTLIST
+		WHERE
+		rentno=#{rentno}
+	</delete>
+
+	<update id="rejectState" parameterType="java.lang.Integer">
+		UPDATE RENTCAR SET
+		RCSTATE='예약가능'
+		WHERE RCNO=#{VALUE}
+	</update>
+
+	<update id="rentSubmit" parameterType="java.lang.Integer">
+		UPDATE RENTCAR SET
+		RCSTATE='승인'
+		WHERE RCNO=#{VALUE}
+	</update>
+	<!-- 예약 -->
+
+	<!-- 회원관리 -->
+
+	<select id="memberIdCheck" parameterType="java.lang.String"
+		resultType="java.lang.String"> <!--중복체크 -->
+
+		SELECT mempw FROM MEMBER
+		WHERE memid=#{VALUE}
+	</select>
+
+	<select id="IdCheck" parameterType="java.lang.String"
+		resultType="java.lang.String"> <!--중복체크 -->
+
+		SELECT memid FROM MEMBER
+		WHERE memid=#{VALUE}
+
+	</select>
+
+	<select id="findlevel" parameterType="String"
+		resultType="sist.com.dto.MemberBean">
+		SELECT MLEVEL
+		FROM MEMBER
+		WHERE MEMID=#{VALUE}
+	</select>
+
+	<select id="selectZipCode" parameterType="java.lang.String"
+		resultType="sist.com.dto.ZipBean"> <!-- 회원가입시 우편번호 -->
+		SELECT ZIPCODE,SIDO,GUGUN,DONG
+		FROM ZIPCODE
+		WHERE DONG LIKE
+		'%'||#{dong}||'%'
+
+	</select>
+
+	<insert id="insertMember"
+		parameterType="sist.com.dto.MemberBean">
+		INSERT INTO MEMBER
+		VALUES(memno_seq.nextval,#{memid},#{mempw},#{mname},#{madress},#{memtel},#{memail},#{mbirth},#{mlevel},sysdate)
+	</insert>
+
+	<select id="memberInfo" parameterType="String"
+		resultType="sist.com.dto.MemberBean">
+		SELECT MEMID, MEMPW, MNAME, MADRESS ,MEMTEL ,MEMAIL, MBIRTH
+		FROM MEMBER
+		WHERE memid=#{memid}
+	</select>
+	
+	<!--  회원정보 수정 ,아이디는 변경 불가 -->
+	<update id="memberUpdate" parameterType="String">
+		UPDATE MEMBER SET
+		MEMPW=#{mempw},
+		MNAME=#{mname},
+		MADRESS=#{madress},
+		MEMTEL=#{memtel},
+		MEMAIL=#{memail}, 
+		MBIRTH=#{mbirth}
+		WHERE MEMID=#{memid}
+	</update>
+	
+
+	<select id="selectmember" resultType="sist.com.dto.MemberBean"
+		parameterType="java.util.HashMap">
+		SELECT
+		MEMNO,MEMID,MEMPW,MNAME,MADRESS,MEMTEL,MEMAIL,MBIRTH,MLEVEL
+		FROM MEMBER
+	</select>
+
+	<select id="findNo" parameterType="String"
+		resultType="sist.com.dto.MemberBean">
+		SELECT MEMNO
+		FROM MEMBER
+		WHERE MEMID=#{memid}
+	</select>
+
+	<select id="myPage_reserve"
+		resultType="sist.com.dto.RentListBean" parameterType="Integer">
+		select RENTNO,
+		RENTDATE,RETURNDATE ,CARNO, MEMBERNO, PSGNUM ,OFCNO, RPRICE
+		from
+		rentlist WHERE MEMBERNO = #{memno}
+
+	</select>
+
+
+	<select id="myQnAselect" resultType="sist.com.dto.QnaBean"
+		parameterType="Integer">
+		SELECT qtitle,qcontents,qanswer,qstate
+		FROM qna
+		WHERE
+		writer=#{memno}
+	</select>
+
+
+	<delete id="deleteMemberList" parameterType="int">
+		delete member
+		where
+		memno=#{memno}
+
+	</delete>
+
+	<insert id="insertTest" parameterType="sist.com.dto.FuelBean">
+		INSERT INTO
+		FUEL(FUELNO,FUELNAME)
+		VALUES(#{fuelno},#{fuelname})
+	</insert>
+
+
+	<select id="selectOffice" resultType="sist.com.dto.OfficeBean"
+		parameterType="java.util.HashMap">
+		select * from office
+	</select>
+
+	<select id="AdminRentCarList"
+		resultType="sist.com.dto.SelectCarListBean">
+		select * from(SELECT
+		RENTCAR.RCNO,RENTCAR.RCMODEL,RENTCAR.RCPRICE,RENTCAR.RCIMG,RENTCAR.RCSTATE,OFFICE.OFCNAME,NAVIGATION.NAVINAME,FUEL.FUELNAME,SEGMENT.SGMTNAME,MAKER.MNAME
+		FROM RENTCAR, OFFICE, NAVIGATION, SEGMENT, FUEL, MAKER
+		WHERE
+		RENTCAR.OFCNO = OFFICE.OFCNO AND SEGMENT.SGMTNO = RENTCAR.SGMTNO AND
+		RENTCAR.MAKERNO = MAKER.MAKERNO AND FUEL.FUELNO = RENTCAR.FUELNO AND
+		RENTCAR.NAVINO = NAVIGATION.NAVINO)
+	</select>
+
+
+	<insert id="insertRentCar"
+		parameterType="sist.com.dto.RentCarBean">
+		insert into rentcar
+		values(rentcar_seq_no.nextval,#{rcmodel},#{rcprice},#{rcimg},'예약가능',#{ofcno},#{navino},#{fuelno},#{sgmtno},#{makerno})
+	</insert>
+
+	<update id="modRentCar" parameterType="sist.com.dto.RentCarBean">
+		update rentcar set
+		rcmodel=#{rcmodel},rcprice=#{rcprice},ofcno=#{ofcno},navino=#{navino},
+		fuelno=#{fuelno},sgmtno=#{sgmtno},makerno=#{makerno}
+		<choose>
+			<when test="rcimg!=null">
+				,
+				rcimg=#{rcimg}
+			</when>
+		</choose>
+		where rcno=#{rcno}
+	</update>
+
+	<select id="rentCarInfo" parameterType="int"
+		resultType="sist.com.dto.SelectCarListBean">
+		select * from(SELECT
+		RENTCAR.RCNO,RENTCAR.RCMODEL,RENTCAR.RCPRICE,RENTCAR.RCIMG,RENTCAR.RCSTATE,OFFICE.OFCNAME,NAVIGATION.NAVINAME,FUEL.FUELNAME,SEGMENT.SGMTNAME,MAKER.MNAME
+		FROM RENTCAR, OFFICE, NAVIGATION, SEGMENT, FUEL, MAKER
+		WHERE
+		RENTCAR.OFCNO = OFFICE.OFCNO AND SEGMENT.SGMTNO = RENTCAR.SGMTNO AND
+		RENTCAR.MAKERNO = MAKER.MAKERNO AND FUEL.FUELNO = RENTCAR.FUELNO AND
+		rcno LIKE '%'||#{VALUE}||'%' AND
+		RENTCAR.NAVINO = NAVIGATION.NAVINO)
+	</select>
+
+	<delete id="deleterentCar" parameterType="int">
+		delete rentcar
+		where
+		rcno=#{rcno}
+
+	</delete>
+
+	<update id="modRcState" parameterType="java.lang.String">
+		UPDATE RENTCAR SET
+		RCSTATE='예약가능'
+		WHERE rcno LIKE '%'||#{rcno}||'%'
+	</update>
+
+	<!-- 회원관리 -->
+	
+	<!--6.13,14 최혜진 추가 :관리자 메인페이지 -->
+	<select id="memberTotal" resultType="int">
+		select count(*) from member
+	</select>
+	
+	<select id="reservationTotal" resultType="int">
+		select count(*) from rentlist
+	</select>
+	
+	<select id="grossSales" resultType="int">
+		select sum(rcprice) from rentlist
+	</select>
+	
+	<select id="todayJoinMember" resultType="int">
+		select count(*) from member where to_char(sysdate,'yymmdd')=to_char(mjoindate,'yymmdd')
+	</select>
+	<!-- 월별 가입자수  -->
+	<select id="thisMonthJoin" resultType="int">
+		select count(*) from member where to_char(add_months(sysdate,0),'yymm')=to_char(mjoindate,'yymm')
+	</select>
+	<select id="previousMonth1" resultType="int">
+		select count(*) from member where to_char(add_months(sysdate,-1),'yymm')=to_char(mjoindate,'yymm')
+	</select>
+	<select id="previousMonth2" resultType="int">
+		select count(*) from member where to_char(add_months(sysdate,-2),'yymm')=to_char(mjoindate,'yymm')
+	</select>
+	
+	<!-- 지점별 총 매출 -->
+	<select id="gangnamTotal" resultType="int">
+		select sum(rcprice) from rentlist where ofcno=1 group by ofcno
+	</select>
+	
+	<!-- 최혜진 추가 끝 -->
+	
+	
+	<!--  20.08.07 서현 추가  -->
+	
+	<insert id="insertReview"
+		parameterType="sist.com.dto.ReviewBean">
+		INSERT INTO REWIEW
+		VALUES(rviewno,#{rtitle},#{ruser},#{rpass},#{rcontents},#{score},regdate,#{rentno})
+	</insert>
+
+	<select id="reviewInfo" parameterType="String"
+		resultType="sist.com.dto.ReviewBean">
+		SELECT RVIEWNO, RTITLE, RUSER, RPASS, RCONTENTS, SCORE, RREGDATE, RENTNO	
+		FROM REVIEW
+		WHERE ruser=#{ruser}
+	</select>
+	
+	
+	<!--  20.08.07 서현 추가 끝 -->
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
